@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FileImage, FolderOpen, Home, Image, Wrench, Youtube } from "lucide-react";
+import { Crop, FileImage, FolderOpen, Home, Image, Wrench, Youtube } from "lucide-react";
 import clsx from "clsx";
 
 const navItems = [
   { href: "/", label: "Inicio", icon: Home },
   { href: "/tools/image-converter", label: "Conversor de imágenes", icon: Image },
+  { href: "/tools/image-editor", label: "Editor de imágenes", icon: Crop },
   { href: "/tools/images-to-pdf", label: "Imágenes a PDF", icon: FileImage },
   { href: "/tools/youtube-downloader", label: "YouTube Downloader", icon: Youtube },
   { href: "/tools/gif-to-jpg", label: "GIF a JPG", icon: FolderOpen },

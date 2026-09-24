@@ -5,6 +5,16 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm install
 
+# Local development with hot reload (used by docker-compose.dev.yml)
+FROM base AS dev
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm install
+COPY . .
+EXPOSE 3000
+ENV NEXT_TELEMETRY_DISABLED=1
+CMD ["npm", "run", "dev"]
+
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules

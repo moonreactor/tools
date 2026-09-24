@@ -67,5 +67,12 @@ async def list_tools():
                 "path": "/tools/gif-to-jpg",
                 "icon": "folder-image",
             },
+            {
+                "id": "image-editor",
+                "name": "Editor de imágenes",
+                "description": "Recortá, ajustá brillo/contraste y aplicá filtros; reemplazá o guardá una copia",
+                "path": "/tools/image-editor",
+                "icon": "crop",
+            },
         ]
     }

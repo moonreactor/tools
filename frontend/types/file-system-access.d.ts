@@ -11,16 +11,27 @@ interface FileSystemWritableFileStream extends WritableStream {
   close(): Promise<void>;
 }
 
-interface FileSystemFileHandle {
-  kind: "file";
+interface FileSystemHandle {
+  kind: "file" | "directory";
   name: string;
-  getFile(): Promise<File>;
-  createWritable(options?: FileSystemCreateWritableOptions): Promise<FileSystemWritableFileStream>;
+  requestPermission(
+    descriptor?: FileSystemHandlePermissionDescriptor
+  ): Promise<PermissionState>;
+  queryPermission(
+    descriptor?: FileSystemHandlePermissionDescriptor
+  ): Promise<PermissionState>;
 }
 
-interface FileSystemDirectoryHandle {
+interface FileSystemFileHandle extends FileSystemHandle {
+  kind: "file";
+  getFile(): Promise<File>;
+  createWritable(
+    options?: FileSystemCreateWritableOptions
+  ): Promise<FileSystemWritableFileStream>;
+}
+
+interface FileSystemDirectoryHandle extends FileSystemHandle {
   kind: "directory";
-  name: string;
   values(): AsyncIterableIterator<FileSystemFileHandle | FileSystemDirectoryHandle>;
   getFileHandle(name: string, options?: { create?: boolean }): Promise<FileSystemFileHandle>;
   getDirectoryHandle(
@@ -28,15 +39,62 @@ interface FileSystemDirectoryHandle {
     options?: { create?: boolean }
   ): Promise<FileSystemDirectoryHandle>;
   removeEntry(name: string, options?: { recursive?: boolean }): Promise<void>;
-  requestPermission(
-    descriptor?: FileSystemHandlePermissionDescriptor
-  ): Promise<PermissionState>;
+}
+
+interface FilePickerAcceptType {
+  description?: string;
+  accept: Record<string, string[]>;
+}
+
+interface OpenFilePickerOptions {
+  multiple?: boolean;
+  excludeAcceptAllOption?: boolean;
+  types?: FilePickerAcceptType[];
+  id?: string;
+  startIn?:
+    | FileSystemHandle
+    | "desktop"
+    | "documents"
+    | "downloads"
+    | "music"
+    | "pictures"
+    | "videos";
+}
+
+interface SaveFilePickerOptions {
+  suggestedName?: string;
+  excludeAcceptAllOption?: boolean;
+  types?: FilePickerAcceptType[];
+  id?: string;
+  startIn?:
+    | FileSystemHandle
+    | "desktop"
+    | "documents"
+    | "downloads"
+    | "music"
+    | "pictures"
+    | "videos";
 }
 
 interface Window {
   showDirectoryPicker(options?: {
     id?: string;
     mode?: "read" | "readwrite";
-    startIn?: FileSystemHandle | "desktop" | "documents" | "downloads" | "music" | "pictures" | "videos";
+    startIn?:
+      | FileSystemHandle
+      | "desktop"
+      | "documents"
+      | "downloads"
+      | "music"
+      | "pictures"
+      | "videos";
   }): Promise<FileSystemDirectoryHandle>;
+
+  showOpenFilePicker(
+    options?: OpenFilePickerOptions
+  ): Promise<FileSystemFileHandle[]>;
+
+  showSaveFilePicker(
+    options?: SaveFilePickerOptions
+  ): Promise<FileSystemFileHandle>;
 }

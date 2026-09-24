@@ -5,6 +5,7 @@ Hub de herramientas con frontend Next.js y backend FastAPI, desplegado con Docke
 ## Herramientas disponibles
 
 - **Conversor de imágenes** — Convierte HEIC, AVIF y WEBP a JPG o PNG
+- **Editor de imágenes** — Recorte, brillo/contraste/saturación y filtros; reemplaza o guarda copia
 - **Imágenes a PDF** — Combina varias imágenes en un PDF, una por página
 - **Descargador YouTube** — Descarga video, audio o transcripción desde un link
 - **GIF a JPG (carpeta)** — Recorre una carpeta, convierte `.gif` → `.jpg` y elimina los originales
@@ -15,6 +16,22 @@ Hub de herramientas con frontend Next.js y backend FastAPI, desplegado con Docke
 - `yt-dlp` en el host (solo para sincronizar cookies de YouTube): `brew install yt-dlp`
 
 ## Inicio rápido
+
+### Desarrollo (hot reload)
+
+Para que los cambios en el código se reflejen solos, sin `make build` en cada edit:
+
+```bash
+make down   # si ya tenías contenedores corriendo
+make dev
+```
+
+- Frontend (`next dev`) y backend (`uvicorn --reload`) montan el código local
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- Docs API: http://localhost:8000/docs
+
+### Producción local (imagen build)
 
 ```bash
 make up
@@ -27,10 +44,6 @@ O manualmente:
 docker compose up --build
 ```
 
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000
-- Docs API: http://localhost:8000/docs
-
 ## Estructura
 
 ```
@@ -39,6 +52,7 @@ tools-varias/
 ├── frontend/          # Next.js — UI del hub
 │   └── app/tools/
 │       ├── image-converter/
+│       ├── image-editor/
 │       ├── images-to-pdf/
 │       ├── youtube-downloader/
 │       └── gif-to-jpg/

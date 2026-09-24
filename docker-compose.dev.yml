@@ -1,0 +1,29 @@
+services:
+  backend:
+    volumes:
+      - ./backend/app:/app/app
+      - ./cookies:/app/cookies:ro
+      - ${GIF_CONVERT_ROOT:-./workspace}:/workspace
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: dev
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+      - frontend_next:/app/.next
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+    command: ["npm", "run", "dev"]
+
+volumes:
+  frontend_node_modules:
+  frontend_next:
