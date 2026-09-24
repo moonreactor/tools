@@ -16,6 +16,10 @@ import clsx from "clsx";
 type OutputFormat = "jpg" | "png";
 type Status = "idle" | "converting" | "done" | "error";
 
+const ACCEPTED_EXTENSIONS = ["heic", "heif", "avif", "webp"];
+const ACCEPT_ATTR =
+  ".heic,.heif,.avif,.webp,image/heic,image/heif,image/avif,image/webp";
+
 export default function ImageConverterPage() {
   const [file, setFile] = useState<File | null>(null);
   const [outputFormat, setOutputFormat] = useState<OutputFormat>("jpg");
@@ -36,8 +40,8 @@ export default function ImageConverterPage() {
   const handleFile = useCallback(
     (selected: File) => {
       const ext = selected.name.split(".").pop()?.toLowerCase();
-      if (!ext || !["heic", "heif"].includes(ext)) {
-        setError("Solo se aceptan archivos HEIC o HEIF");
+      if (!ext || !ACCEPTED_EXTENSIONS.includes(ext)) {
+        setError("Solo se aceptan archivos HEIC, HEIF, AVIF o WEBP");
         return;
       }
       if (selected.size > 50 * 1024 * 1024) {
@@ -95,12 +99,11 @@ export default function ImageConverterPage() {
           Conversor de imágenes
         </h1>
         <p className="text-muted-foreground">
-          Convertí fotos HEIC/HEIF (iPhone) a JPG o PNG de forma rápida.
+          Convertí fotos HEIC, AVIF o WEBP a JPG o PNG de forma rápida.
         </p>
       </div>
 
       <div className="mx-auto max-w-2xl space-y-6">
-        {/* Drop zone */}
         <div
           onDragOver={(e) => {
             e.preventDefault();
@@ -136,17 +139,17 @@ export default function ImageConverterPage() {
             <>
               <Upload className="mx-auto mb-4 h-10 w-10 text-muted-foreground" />
               <p className="mb-2 font-medium">
-                Arrastrá un archivo HEIC o hacé clic para seleccionar
+                Arrastrá una imagen o hacé clic para seleccionar
               </p>
               <p className="mb-4 text-sm text-muted-foreground">
-                HEIC, HEIF — máximo 50 MB
+                HEIC, HEIF, AVIF, WEBP — máximo 50 MB
               </p>
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
+              <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
                 <Upload className="h-4 w-4" />
                 Seleccionar archivo
                 <input
                   type="file"
-                  accept=".heic,.heif,image/heic,image/heif"
+                  accept={ACCEPT_ATTR}
                   className="hidden"
                   onChange={(e) => {
                     const selected = e.target.files?.[0];
@@ -158,7 +161,6 @@ export default function ImageConverterPage() {
           )}
         </div>
 
-        {/* Options */}
         <div className="rounded-xl border border-border bg-card p-6 space-y-5">
           <div>
             <label className="mb-2 block text-sm font-medium">
@@ -168,9 +170,10 @@ export default function ImageConverterPage() {
               {(["jpg", "png"] as OutputFormat[]).map((fmt) => (
                 <button
                   key={fmt}
+                  type="button"
                   onClick={() => setOutputFormat(fmt)}
                   className={clsx(
-                    "flex-1 rounded-lg border py-2.5 text-sm font-medium uppercase transition-colors",
+                    "min-h-11 flex-1 rounded-lg border py-2.5 text-sm font-medium uppercase transition-colors",
                     outputFormat === fmt
                       ? "border-primary bg-primary/15 text-primary"
                       : "border-border text-muted-foreground hover:border-muted-foreground/30"
@@ -185,10 +188,13 @@ export default function ImageConverterPage() {
           {outputFormat === "jpg" && (
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <label className="text-sm font-medium">Calidad JPEG</label>
+                <label htmlFor="jpg-quality" className="text-sm font-medium">
+                  Calidad JPEG
+                </label>
                 <span className="text-sm text-muted-foreground">{quality}%</span>
               </div>
               <input
+                id="jpg-quality"
                 type="range"
                 min={1}
                 max={100}
@@ -200,7 +206,6 @@ export default function ImageConverterPage() {
           )}
         </div>
 
-        {/* Error */}
         {error && (
           <div className="flex items-center gap-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
             <AlertCircle className="h-4 w-4 shrink-0" />
@@ -208,12 +213,12 @@ export default function ImageConverterPage() {
           </div>
         )}
 
-        {/* Actions */}
         <div className="flex gap-3">
           <button
+            type="button"
             onClick={onConvert}
             disabled={!file || status === "converting"}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition-opacity disabled:cursor-not-allowed disabled:opacity-50 hover:opacity-90"
+            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition-opacity disabled:cursor-not-allowed disabled:opacity-50 hover:opacity-90"
           >
             {status === "converting" ? (
               <>
@@ -232,7 +237,7 @@ export default function ImageConverterPage() {
             <a
               href={downloadUrl}
               download={downloadFilename}
-              className="flex items-center justify-center gap-2 rounded-lg border border-primary bg-primary/10 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+              className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-primary bg-primary/10 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
             >
               <Download className="h-4 w-4" />
               Descargar

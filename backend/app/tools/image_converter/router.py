@@ -3,14 +3,21 @@ from enum import Enum
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
+from PIL import Image, ImageOps
 from pillow_heif import register_heif_opener
-from PIL import Image
 
 register_heif_opener()
 
+try:
+    from pillow_heif import register_avif_opener
+
+    register_avif_opener()
+except ImportError:
+    pass
+
 router = APIRouter(prefix="/image-converter", tags=["image-converter"])
 
-ALLOWED_EXTENSIONS = {".heic", ".heif"}
+ALLOWED_EXTENSIONS = {".heic", ".heif", ".avif", ".webp"}
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
 
 
@@ -19,16 +26,42 @@ class OutputFormat(str, Enum):
     png = "png"
 
 
+def _extension(filename: str | None) -> str:
+    if not filename or "." not in filename:
+        return ""
+    return "." + filename.rsplit(".", 1)[-1].lower()
+
+
 def _validate_file(filename: str | None) -> None:
     if not filename:
         raise HTTPException(status_code=400, detail="Filename is required")
 
-    ext = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    ext = _extension(filename)
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
             status_code=400,
             detail=f"Unsupported format. Allowed: {', '.join(sorted(ALLOWED_EXTENSIONS))}",
         )
+
+
+def _prepare_image(image: Image.Image, output_format: OutputFormat) -> Image.Image:
+    image = ImageOps.exif_transpose(image) or image
+    if getattr(image, "n_frames", 1) > 1:
+        image.seek(0)
+
+    if output_format == OutputFormat.jpg:
+        if image.mode in ("RGBA", "LA", "P"):
+            background = Image.new("RGB", image.size, (255, 255, 255))
+            rgba = image.convert("RGBA")
+            background.paste(rgba, mask=rgba.split()[-1])
+            return background
+        if image.mode != "RGB":
+            return image.convert("RGB")
+        return image
+
+    if image.mode not in ("RGB", "RGBA"):
+        return image.convert("RGBA") if "A" in image.getbands() else image.convert("RGB")
+    return image
 
 
 @router.post("/convert")
@@ -48,10 +81,7 @@ async def convert_image(
 
     try:
         image = Image.open(io.BytesIO(content))
-        if image.mode in ("RGBA", "P") and output_format == OutputFormat.jpg:
-            image = image.convert("RGB")
-        elif image.mode not in ("RGB", "RGBA"):
-            image = image.convert("RGB")
+        image = _prepare_image(image, output_format)
 
         buffer = io.BytesIO()
         if output_format == OutputFormat.png:
@@ -59,8 +89,6 @@ async def convert_image(
             media_type = "image/png"
             ext = "png"
         else:
-            if image.mode == "RGBA":
-                image = image.convert("RGB")
             image.save(buffer, format="JPEG", quality=quality, optimize=True)
             media_type = "image/jpeg"
             ext = "jpg"
@@ -82,8 +110,8 @@ async def convert_image(
 async def converter_info():
     return {
         "name": "Image Converter",
-        "description": "Convert HEIC/HEIF images to JPG or PNG",
-        "input_formats": list(ALLOWED_EXTENSIONS),
+        "description": "Convert HEIC, AVIF and WEBP images to JPG or PNG",
+        "input_formats": sorted(ALLOWED_EXTENSIONS),
         "output_formats": ["jpg", "png"],
         "max_file_size_mb": MAX_FILE_SIZE // (1024 * 1024),
     }

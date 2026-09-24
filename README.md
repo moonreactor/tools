@@ -4,7 +4,7 @@ Hub de herramientas con frontend Next.js y backend FastAPI, desplegado con Docke
 
 ## Herramientas disponibles
 
-- **Conversor de imágenes** — Convierte archivos HEIC/HEIF a JPG o PNG
+- **Conversor de imágenes** — Convierte HEIC, AVIF y WEBP a JPG o PNG
 - **Imágenes a PDF** — Combina varias imágenes en un PDF, una por página
 - **Descargador YouTube** — Descarga video, audio o transcripción desde un link
 - **GIF a JPG (carpeta)** — Recorre una carpeta, convierte `.gif` → `.jpg` y elimina los originales

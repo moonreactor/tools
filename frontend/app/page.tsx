@@ -11,7 +11,7 @@ export default async function HomePage() {
       {
         id: "image-converter",
         name: "Conversor de imágenes",
-        description: "Convierte archivos HEIC/HEIF a JPG o PNG",
+        description: "Convierte HEIC, AVIF y WEBP a JPG o PNG",
         path: "/tools/image-converter",
         icon: "image",
       },

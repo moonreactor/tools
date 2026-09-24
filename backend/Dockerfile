@@ -9,6 +9,8 @@ ENV DENO_DIR=/tmp/deno
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libheif-dev \
     libde265-dev \
+    libaom-dev \
+    libdav1d-dev \
     ffmpeg \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
