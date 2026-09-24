@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.env*.local
+.DS_Store
+*.log
+.venv/
+__pycache__/
+cookies/*.txt
+!cookies/.gitkeep
+workspace/*
+!workspace/.gitkeep
