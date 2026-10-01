@@ -4,4 +4,4 @@ python-multipart==0.0.20
 pillow==11.1.0
 pillow-heif==0.21.0
 yt-dlp[default]>=2026.8.19
-youtube-transcript-api
+youtube-transcript-api>=1.2,<2

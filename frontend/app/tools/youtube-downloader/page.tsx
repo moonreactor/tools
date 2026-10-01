@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  Check,
+  Copy,
   Download,
   FileText,
   Loader2,
@@ -67,6 +69,18 @@ export default function YoutubeDownloaderPage() {
 
   const [transcriptText, setTranscriptText] = useState<string | null>(null);
   const [transcriptDownloadUrl, setTranscriptDownloadUrl] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const copyTranscript = async () => {
+    if (!transcriptText) return;
+    try {
+      await navigator.clipboard.writeText(transcriptText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError("No se pudo copiar al portapapeles");
+    }
+  };
 
   const canSubmit = useMemo(() => url.trim().length > 0 && status !== "loading", [url, status]);
 
@@ -444,16 +458,35 @@ export default function YoutubeDownloaderPage() {
           <div className="rounded-xl border border-border bg-card p-6 space-y-4">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-medium">Transcripción</p>
-              {transcriptDownloadUrl && (
-                <a
-                  href={transcriptDownloadUrl}
-                  download="transcripcion.txt"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-primary bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={copyTranscript}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-muted px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted/70"
                 >
-                  <Download className="h-4 w-4" />
-                  Descargar .txt
-                </a>
-              )}
+                  {copied ? (
+                    <>
+                      <Check className="h-4 w-4 text-green-500" />
+                      Copiado
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4" />
+                      Copiar
+                    </>
+                  )}
+                </button>
+                {transcriptDownloadUrl && (
+                  <a
+                    href={transcriptDownloadUrl}
+                    download="transcripcion.txt"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-primary bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+                  >
+                    <Download className="h-4 w-4" />
+                    Descargar .txt
+                  </a>
+                )}
+              </div>
             </div>
             <textarea
               readOnly

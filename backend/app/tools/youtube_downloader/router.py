@@ -613,10 +613,14 @@ async def get_youtube_transcript(
     clip = _clip_seconds(start_time, end_time)
 
     try:
+        transcript_list = YouTubeTranscriptApi().list(video_id)
         if language:
-            transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=[language])
+            selected = transcript_list.find_transcript([language])
         else:
-            transcript = YouTubeTranscriptApi.get_transcript(video_id)
+            selected = next(iter(transcript_list))
+        transcript = selected.fetch().to_raw_data()
+    except StopIteration:
+        raise HTTPException(status_code=404, detail="No transcripts available for this video")
     except Exception as exc:
         raise HTTPException(status_code=422, detail=f"Could not fetch transcript: {exc}") from exc
 
