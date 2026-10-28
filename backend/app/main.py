@@ -3,6 +3,8 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.tools.optimize_for_web.router import router as optimize_for_web_router
+from app.tools.git_history.router import router as git_history_router
 from app.tools.gif_to_jpg.router import router as gif_to_jpg_router
 from app.tools.image_converter.router import router as image_converter_router
 from app.tools.images_to_pdf.router import router as images_to_pdf_router
@@ -24,10 +26,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(optimize_for_web_router, prefix="/api/tools")
 app.include_router(image_converter_router, prefix="/api/tools")
 app.include_router(images_to_pdf_router, prefix="/api/tools")
 app.include_router(youtube_downloader_router, prefix="/api/tools")
 app.include_router(gif_to_jpg_router, prefix="/api/tools")
+app.include_router(git_history_router, prefix="/api/tools")
 
 
 @app.get("/health")
@@ -39,6 +43,8 @@ async def health():
 async def list_tools():
     return {
         "tools": [
+            {"id": "optimize-for-web", "name": "Optimizar para web", "description": "Convertí una carpeta de imágenes a WebP con backup de originales", "path": "/tools/optimize-for-web", "icon": "folder-image"},
+            {"id": "git-history", "name": "Historial Git", "description": "Explorá ramas, buscá commits y editá sus mensajes", "path": "/tools/git-history", "icon": "git-branch"},
             {
                 "id": "image-converter",
                 "name": "Conversor de imágenes",

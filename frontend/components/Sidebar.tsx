@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Crop, FileImage, FolderOpen, Home, Image, Wrench, Youtube } from "lucide-react";
+import { GitBranch, Crop, FileImage, FolderOpen, Home, Image, Wrench, Youtube } from "lucide-react";
 import clsx from "clsx";
 
 const navItems = [
+  { href: "/tools/optimize-for-web", label: "Optimizar para web", icon: FolderOpen },
+  { href: "/tools/git-history", label: "Historial Git", icon: GitBranch },
   { href: "/", label: "Inicio", icon: Home },
   { href: "/tools/image-converter", label: "Conversor de imágenes", icon: Image },
   { href: "/tools/image-editor", label: "Editor de imágenes", icon: Crop },

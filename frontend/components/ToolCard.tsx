@@ -1,8 +1,9 @@
 import Image from "next/image";
-import { Crop, FileImage, FolderOpen, Image as ImageIcon, Wrench, Youtube } from "lucide-react";
+import { GitBranch, Crop, FileImage, FolderOpen, Image as ImageIcon, Wrench, Youtube } from "lucide-react";
 import type { Tool } from "@/lib/api";
 
 const iconMap: Record<string, React.ReactNode> = {
+  "git-branch": <GitBranch className="h-4 w-4" />,
   image: <ImageIcon className="h-4 w-4" />,
   crop: <Crop className="h-4 w-4" />,
   "file-image": <FileImage className="h-4 w-4" />,
@@ -12,6 +13,8 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 const toolImages: Record<string, string> = {
+  "optimize-for-web": "/tools/tool-folder-to-webp.png",
+  "git-history": "/tools/tool-git-historial.png",
   "image-converter": "/tools/tool-image-converter.png",
   "images-to-pdf": "/tools/tool-images-to-pdf.png",
   "youtube-downloader": "/tools/tool-youtube-downloader.png",

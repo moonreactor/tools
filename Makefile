@@ -28,3 +28,7 @@ youtube-cookies:
 
 restart:
 	docker compose restart backend
+
+.PHONY: git-local
+git-local:
+	@./scripts/git-local.sh

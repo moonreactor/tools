@@ -8,6 +8,8 @@ export default async function HomePage() {
     tools = await fetchTools();
   } catch {
     tools = [
+      { id: "optimize-for-web", name: "Optimizar para web", description: "Convertí una carpeta de imágenes a WebP con backup de originales", path: "/tools/optimize-for-web", icon: "folder-image" },
+      { id: "git-history", name: "Historial Git", description: "Explorá ramas, buscá commits y editá sus mensajes", path: "/tools/git-history", icon: "git-branch" },
       {
         id: "image-converter",
         name: "Conversor de imágenes",

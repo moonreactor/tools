@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libaom-dev \
     libdav1d-dev \
     ffmpeg \
+    git \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && deno --version
