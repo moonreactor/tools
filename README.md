@@ -1,85 +1,127 @@
-# Tools Hub
+# Moonreactor Tools Hub
 
-Hub de herramientas con frontend Next.js y backend FastAPI, desplegado con Docker.
+![Vista general de Moonreactor Tools Hub](frontend/public/og-tools-hub.png)
+
+Un sitio web con herramientas prácticas para trabajar con imágenes, video y repositorios Git. El frontend está hecho con Next.js y el backend con FastAPI. Docker Compose inicia ambos servicios.
 
 ## Herramientas disponibles
 
-- **Optimizar para web** — Convierte una carpeta de imágenes a WebP y guarda los originales en un backup con timestamp
-- **Conversor de imágenes** — Convierte HEIC, AVIF y WEBP a JPG o PNG
-- **Editor de imágenes** — Recorte, brillo/contraste/saturación y filtros; reemplaza o guarda copia
-- **Imágenes a PDF** — Combina varias imágenes en un PDF, una por página
-- **Descargador YouTube** — Descarga video, audio o transcripción desde un link
-- **GIF a JPG (carpeta)** — Recorre una carpeta, convierte `.gif` → `.jpg` y elimina los originales
+- **Optimizar para web** (`/tools/optimize-for-web`): convierte imágenes de una carpeta y sus subcarpetas a WebP. Conserva los originales en una carpeta de respaldo, muestra el ahorro de peso y permite ajustar la calidad. Se ejecuta en el navegador y funciona en Chrome o Edge.
+- **Historial Git** (`/tools/git-history`): explora commits y ramas, busca texto en mensajes y permite editar los mensajes de una rama activa con vista previa y respaldo. Para acceder a repositorios de la computadora se necesita iniciar además el servicio local descrito más abajo.
+- **Conversor de imágenes** (`/tools/image-converter`): convierte formatos como HEIC, AVIF y WebP a JPG o PNG.
+- **Editor de imágenes** (`/tools/image-editor`): recorta, ajusta brillo, contraste y saturación, aplica filtros y descarga una copia o reemplaza el archivo según el flujo del navegador.
+- **Imágenes a PDF** (`/tools/images-to-pdf`): combina varias imágenes en un PDF, con una imagen por página.
+- **Descargador de YouTube** (`/tools/youtube-downloader`): obtiene video, audio o transcripción desde un enlace; permite elegir opciones de formato y recortar un tramo.
+- **GIF a JPG** (`/tools/gif-to-jpg`): recorre una carpeta local y sus subcarpetas, convierte GIF a JPG y reemplaza los GIF originales. Requiere Chrome o Edge y permiso de acceso a la carpeta.
 
-## Requisitos
+## Empezar desde cero (recomendado: Docker)
 
-- Docker y Docker Compose
-- `yt-dlp` en el host (solo para sincronizar cookies de YouTube): `brew install yt-dlp`
+Esta es la forma más sencilla de ejecutar el proyecto. No hace falta instalar Node.js ni Python: Docker ejecuta el frontend y el backend en contenedores.
 
-## Inicio rápido
+### 1. Instalar Docker
 
-### Desarrollo (hot reload)
+Instalá **Docker Desktop** para tu sistema operativo y abrilo. Esperá a que indique que Docker está en ejecución.
 
-Para que los cambios en el código se reflejen solos, sin `make build` en cada edit:
+- macOS o Windows: [descargar Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- Linux: instalá Docker Engine y el complemento Docker Compose según la documentación de Docker.
 
-```bash
-make down   # si ya tenías contenedores corriendo
-make dev
-```
+### 2. Descargar el proyecto
 
-- Frontend (`next dev`) y backend (`uvicorn --reload`) montan el código local
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000
-- Docs API: http://localhost:8000/docs
-
-### Producción local (imagen build)
+Si ya tenés este repositorio en tu computadora, abrí una terminal y entrá en su carpeta. Si no, clonalo con Git (reemplazá la URL por la del repositorio):
 
 ```bash
-make up
+git clone <URL_DEL_REPOSITORIO>
+cd tools-varias
 ```
 
-O manualmente:
+### 3. Abrir una terminal en la carpeta del proyecto
+
+La carpeta correcta es la que contiene `Makefile`, `docker-compose.yml` y este `README.md`. En VS Code podés abrir esa carpeta y elegir **Terminal → Nueva terminal**.
+
+### 4. Iniciar el sitio
+
+Ejecutá este comando para iniciar el sitio sin configurar YouTube:
 
 ```bash
-./scripts/sync-youtube-cookies.sh   # una vez (o cuando expiren las cookies)
-docker compose up --build
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
 
-## Estructura
+La primera vez Docker descargará imágenes e instalará dependencias; puede tardar varios minutos. El comando deja la terminal ocupada mostrando los registros: mantenela abierta mientras usás el sitio.
 
-```
-tools-varias/
-├── docker-compose.yml
-├── frontend/          # Next.js — UI del hub
-│   └── app/tools/
-│       ├── image-converter/
-│       ├── image-editor/
-│       ├── images-to-pdf/
-│       ├── youtube-downloader/
-│       └── gif-to-jpg/
-└── backend/           # FastAPI
-    └── app/tools/
-        ├── image_converter/
-        ├── images_to_pdf/
-        ├── youtube_downloader/
-        └── gif_to_jpg/
-├── workspace/         # Carpetas a convertir (GIF → JPG)
-```
-## Desarrollo local (sin Docker)
+Cuando los servicios estén listos, abrí [http://localhost:3000](http://localhost:3000). La API está en [http://localhost:8000](http://localhost:8000) y su documentación en [http://localhost:8000/docs](http://localhost:8000/docs).
 
-### Backend
+### 5. Detener el sitio
+
+Volvé a la terminal donde corre Docker Compose y presioná **Ctrl+C**. Después ejecutá:
+
+```bash
+make down
+```
+
+Para volver a iniciarlo otro día, abrí Docker Desktop, una terminal en la carpeta del proyecto y ejecutá otra vez el comando de inicio.
+
+### Problemas frecuentes
+
+- **«Cannot connect to the Docker daemon»**: abrí Docker Desktop, esperá a que arranque y volvé a ejecutar el comando de inicio.
+- **«port is already allocated»**: otra aplicación está usando el puerto 3000 o 8000. Cerrá esa aplicación y probá de nuevo.
+- **`make: command not found`**: en Windows, usá WSL con Docker Desktop o ejecutá los comandos de Docker Compose directamente.
+- **No aparece una herramienta o el frontend no carga datos**: esperá unos segundos y recargá la página. También podés revisar los registros de la terminal.
+
+## YouTube: configuración opcional
+
+El resto del hub puede iniciarse sin configurar YouTube. Para descargar contenido de YouTube, podés sincronizar cookies del navegador. Necesitás tener `yt-dlp` instalado y una sesión abierta en el navegador elegido.
+
+En macOS, instalalo con:
+
+```bash
+brew install yt-dlp
+```
+
+Después iniciá sesión en YouTube en Chrome y ejecutá `make youtube-cookies`. Si usás otro navegador, indicá su nombre:
+
+```bash
+BROWSER=firefox make youtube-cookies
+```
+
+Las cookies se guardan en `cookies/youtube.txt`, archivo ignorado por Git. Reiniciá el backend para que las tome: `docker compose restart backend`. También podés usar `make dev` o `make up`, que intentan sincronizar cookies automáticamente antes de iniciar.
+
+## Historial Git en repositorios de tu computadora
+
+Para que Historial Git abra repositorios locales, iniciá un servicio auxiliar en otra terminal, desde la raíz de este proyecto:
+
+```bash
+make git-local
+```
+
+Requiere Python 3.10 o superior y Git instalados. Mantené esa terminal abierta mientras usás la herramienta. El servicio escucha solo en tu computadora (`127.0.0.1:8766`) y permite repositorios dentro de tu carpeta de usuario. Para autorizar otra raíz:
+
+```bash
+GIT_REPOS_ROOT=/ruta/a/repositorios make git-local
+```
+
+En Historial Git, elegí **Elegir carpeta de mi computadora** o ingresá una ruta. El selector nativo de carpeta funciona en macOS con Chrome o Edge; en otros sistemas podés ingresar la ruta manualmente. Si el navegador pregunta si permitís acceso a la red local, aceptalo.
+
+Editar mensajes reescribe los commits seleccionados y sus descendientes de la rama activa, aunque conserva archivos, autores, fechas y merges. La herramienta crea un respaldo local, no hace push y elimina las firmas criptográficas de los commits reescritos. Si esos commits ya se publicaron, coordiná la reescritura con tus colaboradores antes de actualizar el remoto.
+
+## Desarrollo sin Docker (opcional)
+
+Usá esta modalidad solo si ya tenés Python 3.10+, Node.js 20+ y npm instalados. En macOS, el backend también necesita las bibliotecas de imágenes HEIF:
+
+```bash
+brew install libheif
+```
+
+En una terminal, iniciá el backend:
 
 ```bash
 cd backend
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
-> En macOS/Linux necesitás `libheif` instalado (`brew install libheif`).
-
-### Frontend
+En otra terminal, desde la raíz del proyecto, iniciá el frontend:
 
 ```bash
 cd frontend
@@ -87,123 +129,55 @@ npm install
 NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev
 ```
 
-## Agregar nuevas herramientas
+Abrí [http://localhost:3000](http://localhost:3000). En Windows, activá el entorno virtual con `.venv\Scripts\activate`; para la variable de entorno del frontend usá PowerShell: `$env:NEXT_PUBLIC_API_URL="http://localhost:8000"; npm run dev`.
 
-1. Crear router en `backend/app/tools/<nombre>/router.py`
-2. Registrar en `backend/app/main.py`
-3. Crear página en `frontend/app/tools/<nombre>/page.tsx`
-4. Agregar entrada en `frontend/components/Sidebar.tsx`
+## Mapa del repositorio
 
-## Cookies de YouTube (automático)
-
-YouTube bloquea descargas sin cookies. El backend las lee automáticamente desde `cookies/youtube.txt`, montado en Docker.
-
-Para generar/actualizar las cookies desde tu navegador (Chrome por defecto):
-
-```bash
-make youtube-cookies
-# o con otro navegador:
-BROWSER=firefox make youtube-cookies
-docker compose restart backend
+```text
+frontend/                 Sitio Next.js y páginas de herramientas
+  app/tools/              Una página por herramienta
+  public/tools/           Imágenes representativas de las herramientas
+  public/og-tools-hub.png Imagen para compartir el sitio (Open Graph)
+backend/                  API FastAPI y lógica de servidor
+  app/tools/              Routers y módulos de las herramientas
+  tests/                  Pruebas del backend
+scripts/                  Ayudantes para cookies y servicio Git local
+cookies/                  Cookies locales de YouTube (no se versionan)
+workspace/                Carpeta montada para conversiones GIF en Docker
+docker-compose.yml        Configuración de Docker
+docker-compose.dev.yml    Configuración de desarrollo con recarga automática
+Makefile                  Comandos de inicio y administración
 ```
 
-El archivo `cookies/youtube.txt` está en `.gitignore` y no se commitea.
+## Comandos útiles
 
-## GIF a JPG (carpeta)
+| Comando | Para qué sirve |
+| --- | --- |
+| `make dev` | Inicia frontend y backend con recarga automática |
+| `make down` | Detiene los contenedores de desarrollo |
+| `make up` | Inicia la versión local construida para producción |
+| `make build` | Construye las imágenes de Docker |
+| `make git-local` | Inicia el servicio para abrir repositorios locales en Historial Git |
+| `make youtube-cookies` | Actualiza las cookies de YouTube |
+| `make restart` | Reinicia el backend |
 
-En la UI (`/tools/gif-to-jpg`) hacé clic en **Elegir carpeta** y seleccioná cualquier carpeta de tu Mac (Chrome o Edge).
+## Agregar una herramienta
 
-La tool:
-1. Escanea `.gif` de forma recursiva
-2. Convierte cada uno a `.jpg`
-3. Escribe el `.jpg` en el mismo lugar y **borra el `.gif` original**
+1. Implementá la lógica del backend en `backend/app/tools/<nombre>/` si la herramienta necesita servidor.
+2. Registrá el router y la herramienta en `backend/app/main.py`.
+3. Creá la página en `frontend/app/tools/<nombre>/page.tsx`.
+4. Agregá la navegación en `frontend/components/Sidebar.tsx` y la tarjeta en `frontend/components/ToolCard.tsx` (incluida su imagen, si corresponde).
 
-> Requiere permiso de lectura/escritura que el navegador pide al elegir la carpeta.
+## Verificaciones disponibles
 
-## Optimizar para web
-
-En `/tools/optimize-for-web`, elegí una carpeta local desde Chrome o Edge y presioná
-**Optimizar imágenes a WebP**. Recorre también las subcarpetas y admite JPG, JPEG,
-PNG, GIF, BMP, TIFF, HEIC, HEIF y AVIF (hasta 100 MB por archivo). Omite los WebP
-existentes y las carpetas `backup` y `backup-*`.
-
-La calidad predeterminada es 80%, ajustable. Conserva dimensiones, transparencia
-y animaciones, y elimina metadatos. Guarda los originales en
-`backup/<timestamp-UTC>-<id>/`, manteniendo la estructura de subcarpetas, y los
-WebP junto a las imágenes de origen. Si un nombre ya existe, agrega un número.
-Retira cada original solo después de completar su backup y escribir el WebP.
-Ante un error conserva el original y continúa con las demás imágenes. Al terminar,
-muestra los archivos convertidos, el peso antes/después, los errores y el backup.
-
-Pruebas del manejo de carpetas: `cd frontend && node --test tests/webOptimizer.test.cjs`.
-
-## Historial Git
-
-Disponible en `/tools/git-history`: explorador de carpetas, grafo de ramas y merges,
-búsqueda literal (sin distinguir mayúsculas) en el título y cuerpo, y edición del
-mensaje completo de cualquier commit de la rama activa. Se muestran 100 commits
-por página. Las otras ramas locales y remotas se pueden consultar sin hacer checkout.
-
-### Acceso a repositorios de tu computadora
-
-Iniciá el servicio local **fuera de Docker**, desde la raíz de este proyecto:
-
-```bash
-make git-local
-```
-
-Requiere Python 3.10+ y Git. El comando prepara un entorno Python aislado con
-FastAPI y Uvicorn, y escucha únicamente en `127.0.0.1:8766`. Mantené esa terminal
-abierta mientras usás la herramienta. Tools Hub puede seguir corriendo en Docker.
-El servicio recarga automáticamente los cambios del backend. Si estaba abierto
-desde una versión anterior y una función devuelve `Not Found`, detenelo con
-Ctrl+C y volvé a ejecutar `make git-local`.
-
-Presioná **Elegir carpeta de mi computadora** para abrir el selector nativo de
-macOS. Al elegir el repositorio se carga su historial automáticamente. Cancelar
-el selector conserva el repositorio abierto. También podés escribir una ruta local.
-Si el navegador pide acceso a la red local, permitilo para conectar con el servicio.
-No necesitás montar tus repositorios dentro de Docker.
-
-Por defecto se permiten repositorios dentro de tu carpeta de usuario. Para elegir
-otra raíz, usá `GIT_REPOS_ROOT=/ruta make git-local`. Los orígenes autorizados son
-`http://localhost:3000` y `http://127.0.0.1:3000`; se pueden configurar con
-`GIT_LOCAL_ORIGINS` (separados por coma). En otros sistemas operativos podés ingresar
-la ruta manualmente; el selector nativo requiere macOS.
-
-### Edición y respaldos
-
-Para **buscar y reemplazar**, ingresá el texto en el buscador y completá
-**Reemplazar por** (vacío permite eliminarlo). Presioná **Ver vista previa del
-reemplazo** para revisar cada mensaje antes y después, y confirmá para aplicar.
-El reemplazo es literal, con opción de distinguir mayúsculas, y alcanza el título
-y cuerpo de todos los commits de la rama activa, incluidas las páginas no visibles.
-Admite ramas de hasta 10.000 commits y mensajes UTF-8. Si la rama o su HEAD cambian
-desde que cargaste el historial, se rechaza la operación y debés actualizarlo.
-Los reemplazos que dejan mensajes vacíos se rechazan sin modificar el historial.
-Cada aplicación crea un único respaldo y actualiza la rama de forma atómica.
-
-Guardar requiere confirmar en la interfaz y tener el directorio de trabajo limpio,
-una rama activa, un clon completo y ninguna operación Git en curso. Se conserva
-el contenido de los archivos, autores, fechas y estructura de merges. Cambian el
-hash del commit editado y los de sus descendientes; se eliminan sus firmas
-criptográficas. Las demás ramas y etiquetas no se mueven y no se ejecuta push.
-
-Cada edición crea una referencia `refs/tools-hub/backups/<id>` con el HEAD anterior.
-La actualización de la rama y la creación del respaldo son atómicas. Si la rama
-avanzó desde que se abrió el editor, se rechaza la edición y se pide actualizar.
-Para recuperar el historial anterior sin tocar la rama actual, creá una rama:
-
-```bash
-git branch recuperar-mensajes refs/tools-hub/backups/<id>
-```
-
-Si los commits ya estaban publicados, coordiná con tus colaboradores antes de
-actualizar el remoto con el historial reescrito. Usá esta herramienta en tu entorno
-local; el servicio local tiene acceso de escritura a los repositorios permitidos.
-
-Pruebas de la herramienta (desde la raíz):
+Desde la raíz del repositorio:
 
 ```bash
 PYTHONPATH=backend python3 -m unittest discover -s backend/tests -v
+```
+
+Para las pruebas del optimizador de imágenes, desde `frontend/`:
+
+```bash
+node --test tests/webOptimizer.test.cjs
 ```
