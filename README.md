@@ -6,7 +6,7 @@ Un sitio web con herramientas prácticas para trabajar con imágenes, video y re
 
 ## Herramientas disponibles
 
-- **Optimizar para web** (`/tools/optimize-for-web`): convierte imágenes de una carpeta y sus subcarpetas a WebP. Conserva los originales en una carpeta de respaldo, muestra el ahorro de peso y permite ajustar la calidad. Se ejecuta en el navegador y funciona en Chrome o Edge.
+- **Optimizar para web** (`/tools/optimize-for-web`): convierte a WebP una carpeta (con selección de imágenes), una sola imagen o varias elegidas. Conserva los originales en una carpeta de respaldo, muestra el ahorro de peso y permite ajustar la calidad. Se ejecuta en el navegador y funciona en Chrome o Edge.
 - **Historial Git** (`/tools/git-history`): explora commits y ramas, busca texto en mensajes y permite editar los mensajes de una rama activa con vista previa y respaldo. Para acceder a repositorios de la computadora se necesita iniciar además el servicio local descrito más abajo.
 - **Conversor de imágenes** (`/tools/image-converter`): convierte formatos como HEIC, AVIF y WebP a JPG o PNG.
 - **Editor de imágenes** (`/tools/image-editor`): recorta, ajusta brillo, contraste y saturación, aplica filtros y descarga una copia o reemplaza el archivo según el flujo del navegador.

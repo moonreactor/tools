@@ -5,12 +5,21 @@ const vm = require("node:vm");
 const ts = require("typescript");
 
 // Exercise the production helper with in-memory File System Access handles.
-function loadOptimizer(fetch) {
+function loadOptimizer(fetch, openFilePicker) {
   const source = fs.readFileSync(require.resolve("../lib/webOptimizer.ts"), "utf8");
   const exports = {};
   vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText, {
-    exports, Blob, FormData, Date, crypto, fetch,
-    require: (name) => name === "./api" ? { getApiUrl: () => "http://test" } : { supportsDirectoryPicker: () => true },
+    exports, Blob, FormData, Date, crypto, fetch, File,
+    window: {
+      showOpenFilePicker: openFilePicker,
+      showDirectoryPicker: async () => { throw new Error("unused"); },
+    },
+    require: (name) => {
+      if (name === "./api") return { getApiUrl: () => "http://test" };
+      if (name === "./localFolder") return { supportsDirectoryPicker: () => true };
+      if (name === "./localFile") return { supportsOpenFilePicker: () => true };
+      throw new Error(`Unexpected require: ${name}`);
+    },
   });
   return exports;
 }
@@ -104,4 +113,36 @@ test("conversion, backup and output failures preserve originals", async () => {
       assert.equal(await backup.children.get("a.jpg").content.text(), "original bytes");
     }
   }
+});
+
+test("pickImageFiles keeps convertible images and skips WebP", async () => {
+  const handles = [
+    new FileHandle("shot.jpg", "jpeg"),
+    new FileHandle("done.webp", "webp"),
+    new FileHandle("nested.png", "png"),
+  ];
+  const optimizer = loadOptimizer(success, async () => handles);
+  const picked = await optimizer.pickImageFiles();
+  assert.deepEqual(Array.from(picked.images, (image) => image.name), ["nested.png", "shot.jpg"]);
+  assert.equal(picked.skippedWebp, 1);
+  assert.equal(picked.skippedOther, 0);
+});
+
+test("optimizePickedImage writes webp and backup without deleting the source", async () => {
+  const optimizer = loadOptimizer(success);
+  const source = new FileHandle("hero.jpg", "hero bytes");
+  const destination = new Directory("output");
+  destination.add(new FileHandle("hero.webp", "existing"));
+  const backup = new Directory("backup-run");
+  const result = await optimizer.optimizePickedImage(
+    { name: "hero.jpg", file: await source.getFile(), handle: source },
+    destination,
+    backup,
+    80,
+  );
+  assert.equal(result.from, "hero.jpg");
+  assert.equal(result.to, "hero-2.webp");
+  assert.equal(destination.children.has("hero-2.webp"), true);
+  assert.equal(await backup.children.get("hero.jpg").content.text(), "hero bytes");
+  assert.equal(await source.content.text(), "hero bytes");
 });
