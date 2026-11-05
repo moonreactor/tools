@@ -193,7 +193,7 @@ export async function fetchYoutubeTranscript(
   url: string,
   language?: string,
   clip?: { startTime?: string; endTime?: string }
-): Promise<{ text: string }> {
+): Promise<{ text: string; language: string | null }> {
   const formData = new FormData();
   formData.append("url", url);
   if (language) formData.append("language", language);
@@ -211,7 +211,10 @@ export async function fetchYoutubeTranscript(
   }
 
   const data = await res.json();
-  return { text: data.text as string };
+  return {
+    text: data.text as string,
+    language: typeof data.language === "string" ? data.language : null,
+  };
 }
 
 export async function convertGifFile(file: File, quality = 90): Promise<Blob> {

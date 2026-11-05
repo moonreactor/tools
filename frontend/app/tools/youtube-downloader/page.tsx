@@ -38,6 +38,15 @@ const QUALITY_OPTIONS: { id: YoutubeVideoQuality; label: string }[] = [
   { id: "360", label: "360p" },
 ];
 
+const TRANSCRIPT_LANGUAGES = [
+  { id: "es", label: "Español" },
+  { id: "en", label: "Inglés" },
+  { id: "pt", label: "Portugués" },
+  { id: "fr", label: "Francés" },
+  { id: "it", label: "Italiano" },
+  { id: "de", label: "Alemán" },
+] as const;
+
 function parseTimestamp(value: string): number | null {
   const raw = value.trim();
   if (!raw) return null;
@@ -67,7 +76,9 @@ export default function YoutubeDownloaderPage() {
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [downloadFilename, setDownloadFilename] = useState<string | null>(null);
 
+  const [transcriptLanguage, setTranscriptLanguage] = useState<string>("es");
   const [transcriptText, setTranscriptText] = useState<string | null>(null);
+  const [transcriptUsedLanguage, setTranscriptUsedLanguage] = useState<string | null>(null);
   const [transcriptDownloadUrl, setTranscriptDownloadUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -88,6 +99,7 @@ export default function YoutubeDownloaderPage() {
     setStatus("idle");
     setError(null);
     setTranscriptText(null);
+    setTranscriptUsedLanguage(null);
     if (downloadUrl) URL.revokeObjectURL(downloadUrl);
     if (transcriptDownloadUrl) URL.revokeObjectURL(transcriptDownloadUrl);
     setDownloadUrl(null);
@@ -175,8 +187,9 @@ export default function YoutubeDownloaderPage() {
         setDownloadUrl(objectUrl);
         setDownloadFilename(filename);
       } else {
-        const { text } = await fetchYoutubeTranscript(cleanUrl, undefined, clip);
+        const { text, language } = await fetchYoutubeTranscript(cleanUrl, transcriptLanguage, clip);
         setTranscriptText(text);
+        setTranscriptUsedLanguage(language);
 
         const b = new Blob([text], { type: "text/plain;charset=utf-8" });
         const objectUrl = URL.createObjectURL(b);
@@ -348,6 +361,27 @@ export default function YoutubeDownloaderPage() {
             </div>
           )}
 
+          {mode === "transcript" && (
+            <div className="rounded-lg border border-border bg-card p-4">
+              <div className="flex items-center justify-between gap-3">
+                <label className="text-sm font-medium" htmlFor="transcript-language">Idioma de la transcripción</label>
+                <select
+                  id="transcript-language"
+                  className="rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                  value={transcriptLanguage}
+                  onChange={(e) => setTranscriptLanguage(e.target.value)}
+                >
+                  {TRANSCRIPT_LANGUAGES.map((option) => (
+                    <option key={option.id} value={option.id}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Por defecto se usa español. Si no hay subtítulos en ese idioma, se intenta con alternativas cercanas.
+              </p>
+            </div>
+          )}
+
           <div className="rounded-lg border border-border bg-background p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-primary" />
@@ -457,7 +491,12 @@ export default function YoutubeDownloaderPage() {
         {status === "done" && mode === "transcript" && transcriptText && (
           <div className="rounded-xl border border-border bg-card p-6 space-y-4">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-medium">Transcripción</p>
+              <div>
+                <p className="text-sm font-medium">Transcripción</p>
+                {transcriptUsedLanguage && (
+                  <p className="text-xs text-muted-foreground">Idioma usado: {transcriptUsedLanguage}</p>
+                )}
+              </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"

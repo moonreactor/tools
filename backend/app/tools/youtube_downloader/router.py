@@ -14,13 +14,56 @@ from urllib.parse import parse_qs, urlparse
 
 from fastapi import APIRouter, BackgroundTasks, Form, HTTPException
 from fastapi.responses import FileResponse
-from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api import NoTranscriptFound, YouTubeTranscriptApi
 
 from app.tools.youtube_downloader.cookies import cookies_args, cookies_configured, get_cookies_path
 
 router = APIRouter(prefix="/youtube-downloader", tags=["youtube-downloader"])
 
 VIDEO_ID_RE = re.compile(r"^[0-9A-Za-z_-]{11}$")
+# Prefer Spanish first so we never fall through to an arbitrary track (often Arabic).
+PREFERRED_TRANSCRIPT_LANGUAGES = (
+    "es",
+    "es-419",
+    "es-ES",
+    "es-MX",
+    "es-US",
+    "es-AR",
+    "en",
+    "en-US",
+    "en-GB",
+)
+
+
+def _language_candidates(language: str = "") -> list[str]:
+    raw = (language or "").strip()
+    if not raw:
+        return list(PREFERRED_TRANSCRIPT_LANGUAGES)
+    codes = [raw]
+    base = raw.split("-", 1)[0].lower()
+    if base and base != raw.lower():
+        codes.append(base)
+    for preferred in PREFERRED_TRANSCRIPT_LANGUAGES:
+        if preferred not in codes:
+            codes.append(preferred)
+    return codes
+
+
+def _select_transcript(transcript_list: Any, language: str = ""):
+    """Pick a transcript preferring the requested/Spanish tracks over arbitrary order."""
+    candidates = _language_candidates(language)
+    try:
+        return transcript_list.find_transcript(candidates)
+    except NoTranscriptFound:
+        pass
+
+    # Prefer any manually created caption over auto-generated translations.
+    for transcript in transcript_list:
+        if not getattr(transcript, "is_generated", True):
+            return transcript
+
+    # Last resort: first available track (keeps previous behavior for obscure languages).
+    return next(iter(transcript_list))
 
 
 class VideoQuality(str, Enum):
@@ -614,13 +657,13 @@ async def get_youtube_transcript(
 
     try:
         transcript_list = YouTubeTranscriptApi().list(video_id)
-        if language:
-            selected = transcript_list.find_transcript([language])
-        else:
-            selected = next(iter(transcript_list))
+        selected = _select_transcript(transcript_list, language)
         transcript = selected.fetch().to_raw_data()
+        selected_language = getattr(selected, "language_code", None) or language or None
     except StopIteration:
         raise HTTPException(status_code=404, detail="No transcripts available for this video")
+    except NoTranscriptFound as exc:
+        raise HTTPException(status_code=404, detail="No transcripts available for this video") from exc
     except Exception as exc:
         raise HTTPException(status_code=422, detail=f"Could not fetch transcript: {exc}") from exc
 
@@ -646,7 +689,7 @@ async def get_youtube_transcript(
             for seg in transcript
         ]
         text = "\n".join(s["text"] for s in segments if s["text"])
-        return {"video_id": video_id, "language": language or None, "text": text, "segments": segments}
+        return {"video_id": video_id, "language": selected_language, "text": text, "segments": segments}
 
     text = " ".join((seg.get("text") or "").strip() for seg in transcript).strip()
-    return {"video_id": video_id, "language": language or None, "text": text}
+    return {"video_id": video_id, "language": selected_language, "text": text}
