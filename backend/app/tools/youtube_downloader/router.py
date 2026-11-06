@@ -119,10 +119,15 @@ def _extractor_args(clients: str) -> str:
     return f"youtube:player_client={clients};player_js_version=actual"
 
 
-DOWNLOAD_STRATEGIES = [
+# None keeps yt-dlp's default player client. The web, web_safari and web_embedded
+# clients often answer "Video unavailable" ("the page needs to be reloaded") for
+# videos that still play in a browser, and android_vr https URLs 403 without a
+# PO token. The default client still returns working formats in that case.
+DOWNLOAD_STRATEGIES: list[tuple[bool, str | None]] = [
+    (False, None),
+    (False, _extractor_args("android,mweb")),
     (False, _extractor_args("android_vr,web_embedded")),
-    (False, _extractor_args("web_safari,web_embedded,-tv_downgraded")),
-    (True, _extractor_args("web_safari,web_embedded,-tv_downgraded")),
+    (True, None),
 ]
 
 YTDLP_BASE_ARGS = [
@@ -175,16 +180,17 @@ def _build_yt_dlp_args(
     extra: list[str],
     *,
     use_cookies: bool,
-    extractor_args: str,
+    extractor_args: str | None,
 ) -> list[str]:
     cookie_args = cookies_args(workdir) if use_cookies else []
-    return [
+    args = [
         *cookie_args,
         *YTDLP_BASE_ARGS,
-        "--extractor-args",
-        extractor_args,
-        *extra,
     ]
+    if extractor_args:
+        args.extend(["--extractor-args", extractor_args])
+    args.extend(extra)
+    return args
 
 
 def _run_yt_dlp(args: list[str], timeout_seconds: int) -> tuple[str, str]:
@@ -221,6 +227,8 @@ def _should_retry_download(detail: str) -> bool:
             "page needs to be reloaded",
             "no video formats",
             "requested format is not available",
+            # Some clients report a playable video as unavailable. Try the next one.
+            "unavailable",
         )
     )
 
@@ -334,7 +342,7 @@ def _probe_video_meta(url: str, workdir: str) -> dict[str, Any]:
             url,
         ],
         use_cookies=False,
-        extractor_args=_extractor_args("android_vr,web_embedded"),
+        extractor_args=None,
     )
     try:
         stdout, _ = _run_yt_dlp(args, timeout_seconds=60)
